@@ -7,6 +7,12 @@
     "next/core-web-vitals"
   ],
   "plugins": ["prettier", "react", "react-hooks", "simple-import-sort"],
+  "overrides": [
+    {
+      "extends": [],
+      "files": ["**/test/**/*.[jt]s?(x)"]
+    }
+  ],
   "ignorePatterns": "**/*.json",
   "rules": {
     "import/order": "off",

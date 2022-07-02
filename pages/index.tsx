@@ -3,9 +3,9 @@ import type { NextPage } from 'next';
 
 const Home: NextPage = () => {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Center>Test</Center>
-    </Box>
+    <Center sx={{ minHeight: '100vh' }}>
+      <div>Test</div>
+    </Center>
   );
 };
 
