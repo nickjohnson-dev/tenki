@@ -1,4 +1,4 @@
-import { Center } from '@mantine/core';
+import { Box, Card, Text, Title } from '@mantine/core';
 import type { NextPage } from 'next';
 import { useEffect } from 'react';
 import useSWR from 'swr';
@@ -25,11 +25,42 @@ const Home: NextPage = () => {
   }, [forecasts]);
 
   return (
-    <Center sx={{ minHeight: '100vh' }}>
+    <Box
+      p="md"
+      sx={{
+        alignItems: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+      }}
+    >
       {isValidating && <div>Loading...</div>}
       {!isValidating && error && <div>Error: {error.message}</div>}
-      {!isValidating && !error && <div>Test</div>}
-    </Center>
+      {!isValidating && !error && (
+        <Box sx={{ maxWidth: 640, width: '100%' }}>
+          <Box
+            sx={{
+              alignItems: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              height: 320,
+              justifyContent: 'center',
+            }}
+          >
+            <Title order={1}>
+              <Text
+                gradient={{ from: 'tomato', to: 'indigo', deg: 45 }}
+                sx={{ fontSize: 'inherit' }}
+                variant="gradient"
+              >
+                Tenki | 天気
+              </Text>
+            </Title>
+          </Box>
+          <Card sx={{ width: '100%' }}>Test</Card>
+        </Box>
+      )}
+    </Box>
   );
 };
 
