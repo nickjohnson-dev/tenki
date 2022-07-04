@@ -8,16 +8,10 @@ import {
   Title,
 } from '@mantine/core';
 import type { NextPage } from 'next';
-import { ChangeEventHandler, useCallback } from 'react';
+import { useRouter } from 'next/router';
+import { ChangeEventHandler, useCallback, useEffect, useState } from 'react';
 
-import {
-  Forecast,
-  ForecastList,
-  getForecasts,
-  TemperatureUnit,
-  useForecasts,
-  useStorageState,
-} from '../src';
+import { Forecast, ForecastList, TemperatureUnit, useForecasts } from '../src';
 
 interface HomeProps {
   forecasts: Forecast[];
@@ -25,9 +19,11 @@ interface HomeProps {
 
 const Home: NextPage<HomeProps> = (props) => {
   const { forecasts } = props;
-  const [temperatureUnit, setTemperatureUnit] =
-    useStorageState<TemperatureUnit>('temperatureUnit', 'F');
-  const [zipCode, setZipCode] = useStorageState('zipCode', '');
+  const router = useRouter();
+  const { zipCode: zipCodeParam } = router.query;
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [temperatureUnit, setTemperatureUnit] = useState<TemperatureUnit>('F');
+  const [zipCode, setZipCode] = useState<string | undefined>();
   useForecasts({ initialData: forecasts });
 
   const handleTemperatureUnitChange = useCallback(() => {
@@ -41,9 +37,33 @@ const Home: NextPage<HomeProps> = (props) => {
       if (!e.target.value || !zipCodeRegex.test(e.target.value)) return;
 
       setZipCode(e.target.value);
+
+      router.push(
+        { pathname: '/', query: { zipCode: e.target.value } },
+        undefined,
+        { shallow: true },
+      );
+
+      localStorage.setItem('zipCode', e.target.value);
     },
-    [setZipCode],
+    [router, setZipCode],
   );
+
+  useEffect(() => {
+    if (router.isReady && !zipCodeParam) {
+      const localStorageZipCode = localStorage.getItem('zipCode');
+
+      if (!!localStorageZipCode) {
+        setZipCode(JSON.parse(localStorageZipCode));
+      }
+    } else {
+      setZipCode(zipCodeParam as string);
+
+      localStorage.setItem('zipCode', zipCodeParam as string);
+    }
+
+    setIsInitializing(false);
+  }, [router.isReady, zipCodeParam]);
 
   return (
     <Box
@@ -52,11 +72,10 @@ const Home: NextPage<HomeProps> = (props) => {
         alignItems: 'center',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
         minHeight: '100vh',
       }}
     >
-      <Box mt={-320} sx={{ maxWidth: 540, width: '100%' }}>
+      <Box sx={{ maxWidth: 540, width: '100%' }}>
         <>
           <Box
             sx={{
@@ -91,14 +110,16 @@ const Home: NextPage<HomeProps> = (props) => {
             }}
           >
             <Stack spacing="lg">
-              <TextInput
-                autoComplete="off"
-                defaultValue={zipCode}
-                onChange={handleZipCodeChange}
-                placeholder="Enter a ZIP code"
-                size="xl"
-                type="number"
-              />
+              {!isInitializing && (
+                <TextInput
+                  autoComplete="off"
+                  defaultValue={zipCode}
+                  onChange={handleZipCodeChange}
+                  placeholder="Enter a ZIP code"
+                  size="xl"
+                  type="number"
+                />
+              )}
               <Switch
                 checked={temperatureUnit === 'C'}
                 label={
@@ -108,12 +129,10 @@ const Home: NextPage<HomeProps> = (props) => {
                 }
                 onChange={handleTemperatureUnitChange}
               />
-              {
-                <ForecastList
-                  temperatureUnit={temperatureUnit}
-                  zipCode={zipCode}
-                />
-              }
+              <ForecastList
+                temperatureUnit={temperatureUnit}
+                zipCode={zipCode}
+              />
             </Stack>
           </Card>
         </>
@@ -121,10 +140,5 @@ const Home: NextPage<HomeProps> = (props) => {
     </Box>
   );
 };
-
-export async function getStaticProps() {
-  const forecasts = await getForecasts({});
-  return { props: { forecasts } };
-}
 
 export default Home;

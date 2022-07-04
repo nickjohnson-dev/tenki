@@ -1,7 +1,7 @@
 import { Box, Center, Loader } from '@mantine/core';
 import { FC, HTMLAttributes, useMemo } from 'react';
 
-import { useForecasts, useIsMounted } from '../hooks';
+import { useForecasts } from '../hooks';
 import { TemperatureUnit } from '../types';
 import { ForecastListItem } from './ForecastListItem';
 
@@ -19,18 +19,15 @@ export interface ForecastListProps extends HTMLAttributes<HTMLElement> {
 
 export const ForecastList: FC<ForecastListProps> = (props) => {
   const { temperatureUnit, zipCode } = props;
-  const { data: forecasts = [], error, isLoading } = useForecasts({ zipCode });
-  const isMounted = useIsMounted();
+  const { data: forecasts = [], error, status } = useForecasts({ zipCode });
 
   const viewState = useMemo<ForecastListViewState>(() => {
     if (!zipCode) return 'initial';
-    if (isLoading) return 'loading';
+    if (status === 'loading') return 'loading';
     if (!!error) return 'error';
     if (forecasts.length < 1) return 'empty';
     return 'results';
-  }, [error, forecasts.length, isLoading, zipCode]);
-
-  if (!isMounted) return null;
+  }, [error, forecasts.length, status, zipCode]);
 
   return (
     <Box sx={{ maxHeight: 600, minHeight: 0, overflowY: 'auto' }}>
