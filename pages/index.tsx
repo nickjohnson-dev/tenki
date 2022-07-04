@@ -1,36 +1,38 @@
 import {
   Box,
   Card,
-  Center,
-  Loader,
   Stack,
+  Switch,
   Text,
   TextInput,
   Title,
 } from '@mantine/core';
 import type { NextPage } from 'next';
-import { ChangeEventHandler, useCallback, useEffect } from 'react';
-import { useQuery } from 'react-query';
+import { ChangeEventHandler, useCallback } from 'react';
 
-import { useStorageState } from '../src';
+import {
+  Forecast,
+  ForecastList,
+  getForecasts,
+  TemperatureUnit,
+  useForecasts,
+  useStorageState,
+} from '../src';
 
-const Home: NextPage = () => {
+interface HomeProps {
+  forecasts: Forecast[];
+}
+
+const Home: NextPage<HomeProps> = (props) => {
+  const { forecasts } = props;
+  const [temperatureUnit, setTemperatureUnit] =
+    useStorageState<TemperatureUnit>('temperatureUnit', 'F');
   const [zipCode, setZipCode] = useStorageState('zipCode', '');
-  const {
-    data: forecasts,
-    error,
-    isLoading,
-  } = useQuery<any, Error>(['forecasts', { zipCode }], async () => {
-    const data = await fetch(
-      'https://api.weather.gov/gridpoints/HUN/65,34/forecast/hourly',
-    ).then((res) => res.json());
+  useForecasts({ initialData: forecasts });
 
-    if (!data) {
-      throw new Error('Failed to fetch forecasts.');
-    }
-
-    return data;
-  });
+  const handleTemperatureUnitChange = useCallback(() => {
+    setTemperatureUnit(temperatureUnit === 'F' ? 'C' : 'F');
+  }, [setTemperatureUnit, temperatureUnit]);
 
   const handleZipCodeChange = useCallback<ChangeEventHandler<HTMLInputElement>>(
     (e) => {
@@ -43,10 +45,6 @@ const Home: NextPage = () => {
     [setZipCode],
   );
 
-  useEffect(() => {
-    console.log({ forecasts });
-  }, [forecasts]);
-
   return (
     <Box
       p="md"
@@ -58,7 +56,7 @@ const Home: NextPage = () => {
         minHeight: '100vh',
       }}
     >
-      <Box mt={-320} sx={{ maxWidth: 480, width: '100%' }}>
+      <Box mt={-320} sx={{ maxWidth: 540, width: '100%' }}>
         <>
           <Box
             sx={{
@@ -92,22 +90,41 @@ const Home: NextPage = () => {
               width: '100%',
             }}
           >
-            <TextInput
-              onChange={handleZipCodeChange}
-              placeholder="Enter a ZIP code"
-              size="xl"
-            />
-            {isLoading && (
-              <Center p="lg" pb={0} sx={{ flex: 1 }}>
-                <Loader />
-              </Center>
-            )}
-            {!isLoading && error && <div>Error: {error.message}</div>}
+            <Stack spacing="lg">
+              <TextInput
+                autoComplete="off"
+                defaultValue={zipCode}
+                onChange={handleZipCodeChange}
+                placeholder="Enter a ZIP code"
+                size="xl"
+                type="number"
+              />
+              <Switch
+                checked={temperatureUnit === 'C'}
+                label={
+                  temperatureUnit === 'F'
+                    ? 'Temperature Unit: F'
+                    : 'Temperature Unit: C'
+                }
+                onChange={handleTemperatureUnitChange}
+              />
+              {
+                <ForecastList
+                  temperatureUnit={temperatureUnit}
+                  zipCode={zipCode}
+                />
+              }
+            </Stack>
           </Card>
         </>
       </Box>
     </Box>
   );
 };
+
+export async function getStaticProps() {
+  const forecasts = await getForecasts({});
+  return { props: { forecasts } };
+}
 
 export default Home;
