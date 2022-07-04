@@ -31,7 +31,7 @@ export const ForecastListItem: FC<ForecastListItemProps> = (props) => {
     >
       <Stack spacing="sm">
         <Box>
-          <Text size="md">{format(forecast.startDate, 'MMM d | hh aa')}</Text>
+          <Text size="md">{format(forecast.startDate, 'MMM d | h aa')}</Text>
         </Box>
         <Box sx={{ display: 'flex' }}>
           <Image
